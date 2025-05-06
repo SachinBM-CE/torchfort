@@ -1,0 +1,1 @@
+/usr/bin/g++-13 -fPIC  -D_GLIBCXX_USE_CXX11_ABI=0 -O2 -g -DNDEBUG -shared  -o PyEnvironments.cpython-310-x86_64-linux-gnu.so CMakeFiles/PyEnvironments.dir/py_env.cpp.o  libenvironments.a 
