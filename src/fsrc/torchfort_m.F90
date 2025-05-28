@@ -719,6 +719,7 @@ module torchfort
   interface torchfort_rl_off_policy_update_replay_buffer
      ! single env
      module procedure torchfort_rl_off_policy_update_replay_buffer_float_1d_1d
+     module procedure torchfort_rl_off_policy_update_replay_buffer_float_2d_2d ! SBM
      module procedure torchfort_rl_off_policy_update_replay_buffer_float_3d_1d
      module procedure torchfort_rl_off_policy_update_replay_buffer_float_3d_3d
 #ifdef _CUDA
@@ -728,6 +729,7 @@ module torchfort
 #endif
      ! multi env
      module procedure torchfort_rl_off_policy_update_replay_buffer_multi_float_1d_1d
+     module procedure torchfort_rl_off_policy_update_replay_buffer_multi_float_2d_2d ! SBM
      module procedure torchfort_rl_off_policy_update_replay_buffer_multi_float_3d_1d
      module procedure torchfort_rl_off_policy_update_replay_buffer_multi_float_3d_3d
 #ifdef _CUDA
@@ -755,7 +757,7 @@ module torchfort
   interface torchfort_rl_off_policy_predict
      module procedure torchfort_rl_off_policy_predict_float_4d_4d
      module procedure torchfort_rl_off_policy_predict_float_4d_2d
-     module procedure torchfort_rl_off_policy_predict_float_2d_2d
+     module procedure torchfort_rl_off_policy_predict_float_2d_2d ! SBM
 #ifdef _CUDA
      module procedure torchfort_rl_off_policy_predict_float_4d_4d_dev
      module procedure torchfort_rl_off_policy_predict_float_4d_2d_dev
@@ -2247,6 +2249,40 @@ contains
     end block
   end function torchfort_rl_off_policy_update_replay_buffer_float_1d_1d
 
+  function torchfort_rl_off_policy_update_replay_buffer_float_2d_2d(mname, state_old, act_old, state_new, &
+                                                                    reward, terminal, stream) result(res)
+    character(len=*) :: mname
+    real(real64) :: state_old(:,:), state_new(:,:), act_old(:,:)
+    real(real64) :: reward
+    logical :: terminal
+    integer(int64), optional :: stream
+    integer(c_int) :: res
+
+    integer(int64) :: stream_
+
+    integer(c_size_t) :: state_dim, act_dim
+    state_dim = size(shape(state_old))
+    act_dim = size(shape(act_old))
+
+    stream_ = 0
+    if (present(stream)) stream_ = stream
+
+    block
+      integer(c_int64_t) :: state_shape(state_dim)
+      integer(c_int64_t) :: act_shape(act_dim)
+      logical(c_bool) :: cterminal
+
+      state_shape(:) = shape(state_old)
+      act_shape(:) = shape(act_old)
+      cterminal = terminal
+
+      res =  torchfort_rl_off_policy_update_replay_buffer_c([trim(mname) // C_NULL_CHAR], &
+                                                            state_old, state_new, state_dim, state_shape, &
+                                                            act_old, act_dim, act_shape, &
+                                                            reward, cterminal, TORCHFORT_FLOAT, stream_)
+    end block
+  end function torchfort_rl_off_policy_update_replay_buffer_float_2d_2d
+
   function torchfort_rl_off_policy_update_replay_buffer_float_3d_3d(mname, state_old, act_old, state_new, &
                                                                     reward, terminal, stream) result(res)
     character(len=*) :: mname
@@ -2456,6 +2492,44 @@ contains
                                                                   TORCHFORT_FLOAT, stream_)
     end block
   end function torchfort_rl_off_policy_update_replay_buffer_multi_float_1d_1d
+
+  function torchfort_rl_off_policy_update_replay_buffer_multi_float_2d_2d(mname, state_old, act_old, state_new, &
+                                                                          reward, terminal, stream) result(res)
+    character(len=*) :: mname
+    real(real64) :: state_old(:,:), state_new(:,:), act_old(:,:), reward(:,:), terminal(:,:)
+    integer(int64), optional :: stream
+    integer(c_int) :: res
+
+    integer(int64) :: stream_
+
+    integer(c_size_t) :: state_dim, act_dim, reward_dim, terminal_dim
+    state_dim = size(shape(state_old))
+    act_dim = size(shape(act_old))
+    reward_dim = size(shape(reward))
+    terminal_dim = size(shape(terminal))
+
+    stream_ = 0
+    if (present(stream)) stream_ = stream
+
+    block
+      integer(c_int64_t) :: state_shape(state_dim)
+      integer(c_int64_t) :: act_shape(act_dim)
+      integer(c_int64_t) :: reward_shape(reward_dim)
+      integer(c_int64_t) :: terminal_shape(terminal_dim)
+
+      state_shape(:) = shape(state_old)
+      act_shape(:) = shape(act_old)
+      reward_shape(:) = shape(reward)
+      terminal_shape(:) = shape(terminal)
+
+      res =  torchfort_rl_off_policy_update_replay_buffer_multi_c([trim(mname) // C_NULL_CHAR], &
+                                                                  state_old, state_new, state_dim, state_shape, &
+                                                                  act_old, act_dim, act_shape, &
+                                                                  reward, reward_dim, reward_shape, &
+                                                                  terminal, terminal_dim, terminal_shape, &
+                                                                  TORCHFORT_FLOAT, stream_)
+    end block
+  end function torchfort_rl_off_policy_update_replay_buffer_multi_float_2d_2d
 
   function torchfort_rl_off_policy_update_replay_buffer_multi_float_3d_3d(mname, state_old, act_old, state_new, &
                                                                           reward, terminal, stream) result(res)
@@ -2674,7 +2748,7 @@ contains
   ! prediction and evaluation routines
   function torchfort_rl_off_policy_predict_explore_float_2d_2d(mname, state, act, stream) result(res)
     character(len=*) :: mname
-    real(real32) :: state(:, :), act(:, :)
+    real(real64) :: state(:, :), act(:, :)
     integer(int64), optional :: stream
     integer(c_int) :: res
 

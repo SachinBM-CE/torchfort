@@ -96,6 +96,14 @@ public:
                       RewardReductionMode reward_reduction_mode, int device)
     : ReplayBuffer(max_size, min_size, n_envs, device), rng_(), gamma_(gamma), nstep_(nstep) {
 
+    std::cout << "[UniformReplayBuffer] Constructor called with:\n"
+            << "  max_size = " << max_size << "\n"
+            << "  min_size = " << min_size << "\n"
+            << "  n_envs   = " << n_envs << "\n"
+            << "  per-env max_size = " << max_size_ << "\n"
+            << "  per-env min_size = " << min_size_ << "\n"
+            << std::endl;
+
     // set up reward reduction mode
     skip_incomplete_steps_ = true;
     if (reward_reduction_mode == RewardReductionMode::MeanNoSkip) {
@@ -120,6 +128,13 @@ public:
 
     // add no grad guard
     torch::NoGradGuard no_grad;
+
+    std::cout << "[DEBUG] Tensor shapes:\n"
+          << "  s: " << s.sizes() << "\n"
+          << "  a: " << a.sizes() << "\n"
+          << "  sp: " << sp.sizes() << "\n"
+          << "  r: " << r.sizes() << "\n"
+          << "  d: " << d.sizes() << std::endl;
 
     if( (s.sizes()[0] != n_envs_) || (a.sizes()[0] != n_envs_) || (sp.sizes()[0] != n_envs_) ) {
       throw std::runtime_error("UniformReplayBuffer::update: the size of the leading dimension of tensors s, a and sp has to be equal to the number of environments");
