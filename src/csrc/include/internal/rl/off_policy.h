@@ -202,6 +202,11 @@ static void predict(const char* name, T* state, size_t state_dim, int64_t* state
   // create tensors
   auto state_tensor =
       get_tensor<L>(state, state_dim, state_shape).to(torch::kFloat32, /* non_blocking = */ false, /* copy = */ true);
+  std::cout << "[DEBUG] off_policy.h - predict\n"
+            << "  state_tensor.sizes : " << state_tensor.sizes() << "\n"
+//             << "  state_tensor       : " << state_tensor << "\n"
+            << "  min                : " << torch::min(state_tensor) << "\n"
+            << "  max                : " << torch::max(state_tensor) << std::endl;
   auto action_tensor = get_tensor<L>(action, action_dim, action_shape);
 
   // fwd pass

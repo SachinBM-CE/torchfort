@@ -351,7 +351,7 @@ module torchfort
       type(*) :: mname(*)
       !dir$ ignore_tkr (dk)state_old, (dk)state_new, (dk)act_old, (dk)reward, (dk)cterminal
       !GCC$ attributes no_arg_check :: state_old, state_new, act_old, reward, cterminal
-      real(c_float) :: state_old(*), state_new(*), act_old(*), reward(*), cterminal(*)
+      real(c_double) :: state_old(*), state_new(*), act_old(*), reward(*), cterminal(*) ! SBM : changed c_float to c_double
       integer(c_size_t), value :: state_dim, act_dim, reward_dim, cterminal_dim
       integer(c_int64_t) :: state_shape(*), act_shape(*), reward_shape(*), cterminal_shape(*)
       integer(c_int), value :: dtype
@@ -384,7 +384,7 @@ module torchfort
       type(*) :: mname(*)
       !dir$ ignore_tkr (dk)state, (dk)act
       !GCC$ attributes no_arg_check :: state, act
-      real(c_float) :: state(*), act(*)
+      real(c_double) :: state(*), act(*) ! SBM : changed c_float to c_double
       integer(c_size_t), value :: state_dim, act_dim
       integer(c_int64_t) :: state_shape(*), act_shape(*)
       integer(c_int), value :: dtype
@@ -399,7 +399,7 @@ module torchfort
       type(*) :: mname(*)
       !dir$ ignore_tkr (dk)state, (dk)act
       !GCC$ attributes no_arg_check :: state, act
-      real(c_float) :: state(*), act(*)
+      real(c_double) :: state(*), act(*) ! SBM : changed c_float to c_double
       integer(c_size_t), value :: state_dim, act_dim
       integer(c_int64_t) :: state_shape(*), act_shape(*)
       integer(c_int), value :: dtype
@@ -729,7 +729,7 @@ module torchfort
 #endif
      ! multi env
      module procedure torchfort_rl_off_policy_update_replay_buffer_multi_float_1d_1d
-     module procedure torchfort_rl_off_policy_update_replay_buffer_multi_float_2d_2d ! SBM
+     module procedure torchfort_rl_off_policy_update_replay_buffer_multi_double_2d_2d ! SBM
      module procedure torchfort_rl_off_policy_update_replay_buffer_multi_float_3d_1d
      module procedure torchfort_rl_off_policy_update_replay_buffer_multi_float_3d_3d
 #ifdef _CUDA
@@ -745,6 +745,7 @@ module torchfort
 
   interface torchfort_rl_off_policy_predict_explore
      module procedure torchfort_rl_off_policy_predict_explore_float_2d_2d
+     module procedure torchfort_rl_off_policy_predict_explore_double_2d_2d
      module procedure torchfort_rl_off_policy_predict_explore_float_4d_4d
      module procedure torchfort_rl_off_policy_predict_explore_float_4d_2d
 #ifdef _CUDA
@@ -757,7 +758,7 @@ module torchfort
   interface torchfort_rl_off_policy_predict
      module procedure torchfort_rl_off_policy_predict_float_4d_4d
      module procedure torchfort_rl_off_policy_predict_float_4d_2d
-     module procedure torchfort_rl_off_policy_predict_float_2d_2d ! SBM
+     module procedure torchfort_rl_off_policy_predict_double_2d_2d ! SBM
 #ifdef _CUDA
      module procedure torchfort_rl_off_policy_predict_float_4d_4d_dev
      module procedure torchfort_rl_off_policy_predict_float_4d_2d_dev
@@ -2493,7 +2494,7 @@ contains
     end block
   end function torchfort_rl_off_policy_update_replay_buffer_multi_float_1d_1d
 
-  function torchfort_rl_off_policy_update_replay_buffer_multi_float_2d_2d(mname, state_old, act_old, state_new, &
+  function torchfort_rl_off_policy_update_replay_buffer_multi_double_2d_2d(mname, state_old, act_old, state_new, &
                                                                           reward, terminal, stream) result(res)
     character(len=*) :: mname
     real(real64) :: state_old(:,:), state_new(:,:), act_old(:,:), reward(:,:), terminal(:,:)
@@ -2527,9 +2528,9 @@ contains
                                                                   act_old, act_dim, act_shape, &
                                                                   reward, reward_dim, reward_shape, &
                                                                   terminal, terminal_dim, terminal_shape, &
-                                                                  TORCHFORT_FLOAT, stream_)
+                                                                  TORCHFORT_DOUBLE, stream_)
     end block
-  end function torchfort_rl_off_policy_update_replay_buffer_multi_float_2d_2d
+  end function torchfort_rl_off_policy_update_replay_buffer_multi_double_2d_2d
 
   function torchfort_rl_off_policy_update_replay_buffer_multi_float_3d_3d(mname, state_old, act_old, state_new, &
                                                                           reward, terminal, stream) result(res)
@@ -2748,7 +2749,7 @@ contains
   ! prediction and evaluation routines
   function torchfort_rl_off_policy_predict_explore_float_2d_2d(mname, state, act, stream) result(res)
     character(len=*) :: mname
-    real(real64) :: state(:, :), act(:, :)
+    real(real32) :: state(:, :), act(:, :)
     integer(int64), optional :: stream
     integer(c_int) :: res
 
@@ -2775,6 +2776,36 @@ contains
                                                       TORCHFORT_FLOAT, stream_)
     end block
   end function torchfort_rl_off_policy_predict_explore_float_2d_2d
+
+  function torchfort_rl_off_policy_predict_explore_double_2d_2d(mname, state, act, stream) result(res)
+    character(len=*) :: mname
+    real(real64) :: state(:, :), act(:, :)
+    integer(int64), optional :: stream
+    integer(c_int) :: res
+
+    integer(int64) :: stream_
+
+    integer(c_size_t) :: state_dim, act_dim
+
+    state_dim = size(shape(state))
+    act_dim = size(shape(act))
+
+    stream_ = 0
+    if (present(stream)) stream_ = stream
+
+    block
+      integer(c_int64_t) :: state_shape(state_dim)
+      integer(c_int64_t) :: act_shape(act_dim)
+
+      state_shape(:) = shape(state)
+      act_shape(:) = shape(act)
+
+      res = torchfort_rl_off_policy_predict_explore_c([trim(mname) // C_NULL_CHAR], &
+                                                      state, state_dim, state_shape, &
+                                                      act, act_dim, act_shape, &
+                                                      TORCHFORT_DOUBLE, stream_)
+    end block
+  end function torchfort_rl_off_policy_predict_explore_double_2d_2d
 
   function torchfort_rl_off_policy_predict_explore_float_4d_4d(mname, state, act, stream) result(res)
     character(len=*) :: mname
@@ -2992,7 +3023,7 @@ contains
   end function torchfort_rl_off_policy_predict_float_4d_4d_dev
 #endif
 
-  function torchfort_rl_off_policy_predict_float_2d_2d(mname, state, act, stream) result(res)
+  function torchfort_rl_off_policy_predict_double_2d_2d(mname, state, act, stream) result(res)
     character(len=*) :: mname
     real(real64) :: state(:, :), act(:,:)
     integer(int64), optional :: stream
@@ -3015,12 +3046,25 @@ contains
       state_shape(:) = shape(state)
       act_shape(:) = shape(act)
 
+      print *, '[DEBUG] predict_float_2d_2d:'
+      print *, '  Method Name: ', trim(mname)
+
+      print *, '  State Dims (rank): ', state_dim
+      print *, '  State Shape      : ', state_shape
+!       print *, '  State Data       :'
+!       print *, state ! This prints the entire 2D array
+
+      print *, '  Action Dims (rank): ', act_dim
+      print *, '  Action Shape      : ', act_shape
+!       print *, '  Action Data       :'
+!       print *, act ! This prints the entire 2D array
+
       res = torchfort_rl_off_policy_predict_c([trim(mname), C_NULL_CHAR], &
                                               state, state_dim, state_shape, &
                                               act, act_dim, act_shape, &
-                                              TORCHFORT_FLOAT, stream_)
+                                              TORCHFORT_DOUBLE, stream_)
     end block
-  end function torchfort_rl_off_policy_predict_float_2d_2d
+  end function torchfort_rl_off_policy_predict_double_2d_2d
 
   function torchfort_rl_off_policy_predict_float_4d_2d(mname, state, act, stream) result(res)
     character(len=*) :: mname

@@ -67,6 +67,10 @@ std::shared_ptr<NormalDistribution> GaussianPolicy::getDistribution_(torch::Tens
   auto& action_log_sigma = fwd[1];
   auto action_sigma = torch::exp(torch::clamp(action_log_sigma, log_sigma_min_, log_sigma_max_));
 
+  std::cout << "[DEBUG] getDistribution_ Tensor shapes:\n"
+            << "  action_sigma: " << action_sigma.sizes() << "\n"
+            << "  action_mu: " << action_mu.sizes() << std::endl;
+
   // create distribution
   return std::make_shared<NormalDistribution>(action_mu, action_sigma);
 }
@@ -96,6 +100,11 @@ std::tuple<torch::Tensor, torch::Tensor> GaussianPolicy::evaluateAction(torch::T
     // use analytical formula for entropy
     entropy = torch::sum(torch::flatten(pi_dist->entropy(), 1), 1, false);
   }
+
+  std::cout << "[DEBUG] evaluateAction Tensor shapes:\n"
+            << "  log_prob: " << log_prob.sizes() << "\n"
+            << "  entropy: " << entropy.sizes() << std::endl;
+
   return std::make_tuple(log_prob, entropy);
 }
 
@@ -107,6 +116,7 @@ std::tuple<torch::Tensor, torch::Tensor> GaussianPolicy::forwardNoise(torch::Ten
   // do not squash yet
   auto action = pi_dist->rsample();
   auto log_prob = torch::sum(torch::flatten(pi_dist->log_prob(action), 1), 1, false);
+//   auto log_prob = torch::sum(pi_dist->log_prob(action), 1, false); ! NO FLATTENING ?
 
   // account for squashing
   if (squashed_) {
@@ -114,6 +124,10 @@ std::tuple<torch::Tensor, torch::Tensor> GaussianPolicy::forwardNoise(torch::Ten
         log_prob - torch::sum(torch::flatten(2. * (std::log(2.) - action - torch::softplus(-2. * action)), 1), 1, false);
     action = torch::tanh(action);
   }
+
+  std::cout << "[DEBUG] forwardNoise Tensor shapes:\n"
+            << "  action: " << action.sizes() << "\n"
+            << "  log_prob: " << log_prob.sizes() << std::endl;
 
   return std::make_tuple(action, log_prob);
 }
@@ -125,6 +139,9 @@ torch::Tensor GaussianPolicy::forwardDeterministic(torch::Tensor state) {
   if (squashed_) {
     action = torch::tanh(action);
   }
+
+  std::cout << "[DEBUG] forwardDeterministic Tensor shapes:\n"
+            << "  action: " << action.sizes() << std::endl;
 
   return action;
 }
@@ -162,6 +179,11 @@ GaussianACPolicy::getDistributionValue_(torch::Tensor state) {
   // extract value
   auto& value = fwd[2];
 
+  std::cout << "[DEBUG] getDistributionValue_ Tensor shapes:\n"
+            << "  action_mu: " << action_mu.sizes() << "\n"
+            << "  action_sigma: " << action_sigma.sizes() << "\n"
+            << "  value: " << value.sizes() << std::endl;
+
   // create distribution
   return std::make_tuple(std::make_shared<NormalDistribution>(action_mu, action_sigma), value);
 }
@@ -197,6 +219,11 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> GaussianACPolicy::evalua
 
   // squeeze value
   value = torch::squeeze(value, 1);
+
+  std::cout << "[DEBUG] evaluateAction Tensor shapes:\n"
+            << "  log_prob: " << log_prob.sizes() << "\n"
+            << "  entropy: " << entropy.sizes() << "\n"
+            << "  value: " << value.sizes() << std::endl;
   
   return std::make_tuple(log_prob, entropy, value);
 }
@@ -222,6 +249,11 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> GaussianACPolicy::forwar
   // squeeze value
   value = torch::squeeze(value, 1);
 
+  std::cout << "[DEBUG] forwardNoise Tensor shapes:\n"
+            << "  action: " << action.sizes() << "\n"
+            << "  log_prob: " << log_prob.sizes() << "\n"
+            << "  value: " << value.sizes() << std::endl;
+
   return std::make_tuple(action, log_prob, value);
 }
 
@@ -237,6 +269,10 @@ std::tuple<torch::Tensor, torch::Tensor> GaussianACPolicy::forwardDeterministic(
 
   // squeeze value
   value = torch::squeeze(value, 1);
+
+  std::cout << "[DEBUG] forwardDeterministic Tensor shapes:\n"
+            << "  action: " << action.sizes() << "\n"
+            << "  value: " << value.sizes() << std::endl;
 
   return std::make_tuple(action, value);
 }

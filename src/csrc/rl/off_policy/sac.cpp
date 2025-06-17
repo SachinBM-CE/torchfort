@@ -556,6 +556,12 @@ torch::Tensor SACSystem::predict(torch::Tensor state) {
   // clip action
   action = unscale_action(action, a_low_, a_high_);
 
+  std::cout << "[DEBUG] SACSystem::predict\n"
+            << "  action.sizes : " << action.sizes() << "\n"
+//             << "  action       : " << action << "\n"
+            << "  a_min        : " << torch::min(action) << "\n"
+            << "  a_max        : " << torch::max(action) << std::endl;
+
   return action;
 }
 

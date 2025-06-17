@@ -1196,8 +1196,8 @@ examples/cpp/cart_pole/CMakeFiles/environments.dir/clean:
 # Target rules for target examples/cpp/cart_pole/CMakeFiles/train_cart_pole.dir
 
 # All Build rule for target.
-examples/cpp/cart_pole/CMakeFiles/train_cart_pole.dir/all: examples/cpp/cart_pole/CMakeFiles/environments.dir/all
 examples/cpp/cart_pole/CMakeFiles/train_cart_pole.dir/all: CMakeFiles/torchfort.dir/all
+examples/cpp/cart_pole/CMakeFiles/train_cart_pole.dir/all: examples/cpp/cart_pole/CMakeFiles/environments.dir/all
 	$(MAKE) $(MAKESILENT) -f examples/cpp/cart_pole/CMakeFiles/train_cart_pole.dir/build.make examples/cpp/cart_pole/CMakeFiles/train_cart_pole.dir/depend
 	$(MAKE) $(MAKESILENT) -f examples/cpp/cart_pole/CMakeFiles/train_cart_pole.dir/build.make examples/cpp/cart_pole/CMakeFiles/train_cart_pole.dir/build
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/tmp/sachinbm/TorchFort/build/CMakeFiles --progress-num=65,66 "Built target train_cart_pole"

@@ -45,9 +45,23 @@ void SACMLPModel::setup(const ParamMap& params) {
 
 // Implement the forward function.
 std::vector<torch::Tensor> SACMLPModel::forward(const std::vector<torch::Tensor>& inputs) {
+
+  std::cout << "[DEBUG] SACMLPModel::forward\n"
+            << "  inputs: " << inputs.size() << std::endl;
+
   // concatenate inputs
   auto x = torch::cat(inputs, 1);
+  std::cout << "  x.sizes: " << x.sizes() << std::endl;
+//   std::cout << "  x      : " << x << std::endl;
+  std::cout << "  x_min  : " << torch::min(x) << std::endl;
+  std::cout << "  x_max  : " << torch::max(x) << std::endl;
+
   x = x.reshape({x.size(0), -1});
+  std::cout << "  x.sizes: " << x.sizes() << std::endl;
+//   std::cout << "  x      : " << x << std::endl;
+  std::cout << "  x_min  : " << torch::min(x) << std::endl;
+  std::cout << "  x_max  : " << torch::max(x) << std::endl;
+
   torch::Tensor y, z;
 
   for (int i = 0; i < layer_sizes.size() - 1; ++i) {
@@ -66,6 +80,17 @@ std::vector<torch::Tensor> SACMLPModel::forward(const std::vector<torch::Tensor>
       }
     }
   }
+
+  std::cout << "  y.sizes: " << y.sizes() << std::endl;
+//   std::cout << "  y      : " << y << std::endl;
+  std::cout << "  y_min  : " << torch::min(y) << std::endl;
+  std::cout << "  y_max  : " << torch::max(y) << std::endl;
+
+  std::cout << "  z.sizes: " << z.sizes() << std::endl;
+//   std::cout << "  z      : " << z << std::endl;
+  std::cout << "  z_min  : " << torch::min(z) << std::endl;
+  std::cout << "  z_max  : " << torch::max(z) << std::endl;
+
   return std::vector<torch::Tensor>{y, z};
 }
 
